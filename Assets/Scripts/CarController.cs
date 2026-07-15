@@ -21,6 +21,9 @@ public class CarController : MonoBehaviour
 
     [Header("Settings")]
     public float motorForce = 1500f;
+    [Header("Vites Ayarları")]
+    [Tooltip("Eğer araba D konumunda geri, R konumunda ileri gidiyorsa bu kutucuğu işaretle!")]
+    public bool reverseMotorDirection = false;
     public float brakeForce = 3000f;
     public float maxSteerAngle = 30f;
 
@@ -49,10 +52,9 @@ public class CarController : MonoBehaviour
     [Header("Collider Pozisyon Düzeltmesi")]
     public Vector3 colliderPositionOffset = new Vector3(0, 0, 0);
 
-    // Mobil Arayüzden Tetiklenecek Giriş Değerleri
-    private float throttleInput; // Gaz pedalından gelecek (0 ile 1 arası)
-    private float steerInput;    // Direksiyondan gelecek (-1 ile 1 arası)
-    private bool isHoldingBrake; // Fren pedalından gelecek (true/false)
+    private float throttleInput; 
+    private float steerInput;    
+    private bool isHoldingBrake; 
 
     private Rigidbody rb;
     private float currentSteerAngle;
@@ -67,6 +69,7 @@ public class CarController : MonoBehaviour
         ApplyFrictionSettings(wheelRL);
         ApplyFrictionSettings(wheelRR);
 
+        // Gövde pozisyonlarını kaydet
         if (carPartsToRaise != null && carPartsToRaise.Length > 0)
         {
             originalBodyLocalPositions = new Vector3[carPartsToRaise.Length];
@@ -90,31 +93,14 @@ public class CarController : MonoBehaviour
         wc.sidewaysFriction = sideways;
     }
 
-    // --- MOBİL BUTONLARIN TETİKLEYECEĞİ FONKSİYONLAR (Dışarıdan çağrılacak) ---
-    
-    // Gaz pedalına basıldığında (value = 1), bırakıldığında (value = 0)
-    public void SetThrottleInput(float value)
-    {
-        throttleInput = value;
-    }
+    public void SetThrottleInput(float value) { throttleInput = value; }
+    public void SetSteerInput(float value) { steerInput = value; }
+    public void SetBrakeInput(bool state) { isHoldingBrake = state; }
 
-    // Direksiyon döndürüldüğünde (-1 tam sol, 1 tam sağ)
-    public void SetSteerInput(float value)
-    {
-        steerInput = value;
-    }
-
-    // Fren pedalına basıldığında (state = true), bırakıldığında (state = false)
-    public void SetBrakeInput(bool state)
-    {
-        isHoldingBrake = state;
-    }
-
-    // Vites butonuna her basıldığında D ve R arasında geçiş yapar
     public void ToggleGear()
     {
         float speed = rb.linearVelocity.magnitude * 3.6f;
-        if (speed < 5f) // Araba durmaya yakınken vites değişsin
+        if (speed < 5f) 
         {
             currentGear = currentGear == Gear.Drive ? Gear.Reverse : Gear.Drive;
             Debug.Log("Yeni Vites: " + currentGear);
@@ -127,7 +113,7 @@ public class CarController : MonoBehaviour
         ApplyMotorTorque();
         ApplyBrakes();
         
-        isBraking = isHoldingBrake; // Fren lambası durumu
+        isBraking = isHoldingBrake; 
 
         SyncAllWheelMeshes();
         UpdateCarBodyHeight();
@@ -139,41 +125,46 @@ public class CarController : MonoBehaviour
         if (reduceSteerAtSpeed)
         {
             float speedKmh = rb.linearVelocity.magnitude * 3.6f;
-            float t = Mathf.Clamp01(speedKmh / speedForMinSteer);
-            steerMultiplier = Mathf.Lerp(1f, minSteerMultiplier, t);
+            if (speedKmh > 0.1f) // Hız sıfırken bölme hatası olmasın diye güvenliğe aldık
+            {
+                float t = Mathf.Clamp01(speedKmh / speedForMinSteer);
+                steerMultiplier = Mathf.Lerp(1f, minSteerMultiplier, t);
+            }
         }
 
         float targetSteerAngle = steerInput * maxSteerAngle * steerMultiplier;
         currentSteerAngle = Mathf.Lerp(currentSteerAngle, targetSteerAngle, steerSpeed * Time.fixedDeltaTime);
 
-        wheelFL.steerAngle = currentSteerAngle;
-        wheelFR.steerAngle = currentSteerAngle;
+        if(wheelFL != null) wheelFL.steerAngle = currentSteerAngle;
+        if(wheelFR != null) wheelFR.steerAngle = currentSteerAngle;
     }
 
     void ApplyMotorTorque()
     {
-        // Gaz inputunu vites durumuna göre yönlendiriyoruz
-        float gearMultiplier = (currentGear == Gear.Drive) ? -1f : 1f;
-        float appliedMotorTorque = throttleInput * motorForce * gearMultiplier;
+        float gearMultiplier = (currentGear == Gear.Drive) ? 1f : -1f; 
 
-        // Eğer frene basılıyorsa gaza basılsa bile motor torkunu sıfırla (güvenlik için)
+        if (reverseMotorDirection)
+        {
+            gearMultiplier = -gearMultiplier;
+        }
+
+        float appliedMotorTorque = throttleInput * motorForce * gearMultiplier;
         if (isHoldingBrake) appliedMotorTorque = 0f;
 
-        wheelFL.motorTorque = appliedMotorTorque;
-        wheelFR.motorTorque = appliedMotorTorque;
-        wheelRL.motorTorque = appliedMotorTorque;
-        wheelRR.motorTorque = appliedMotorTorque;
+        if(wheelFL != null) wheelFL.motorTorque = appliedMotorTorque;
+        if(wheelFR != null) wheelFR.motorTorque = appliedMotorTorque;
+        if(wheelRL != null) wheelRL.motorTorque = appliedMotorTorque;
+        if(wheelRR != null) wheelRR.motorTorque = appliedMotorTorque;
     }
 
     void ApplyBrakes()
     {
-        // UI butonundan gelen fren komutuna göre fren kuvveti uygula
         float appliedBrakeForce = isHoldingBrake ? brakeForce : 0f;
 
-        wheelFL.brakeTorque = appliedBrakeForce;
-        wheelFR.brakeTorque = appliedBrakeForce;
-        wheelRL.brakeTorque = appliedBrakeForce;
-        wheelRR.brakeTorque = appliedBrakeForce;
+        if(wheelFL != null) wheelFL.brakeTorque = appliedBrakeForce;
+        if(wheelFR != null) wheelFR.brakeTorque = appliedBrakeForce;
+        if(wheelRL != null) wheelRL.brakeTorque = appliedBrakeForce;
+        if(wheelRR != null) wheelRR.brakeTorque = appliedBrakeForce;
     }
 
     void SyncAllWheelMeshes()
@@ -193,16 +184,18 @@ public class CarController : MonoBehaviour
         Vector3 directionOffset = colliderPositionOffset;
         if (!isLeftWheel) directionOffset.x = -directionOffset.x;
 
+        // DÜZELTME: Eğer arabanın Scale'i 1,1,1 değilse, pozisyonu yerel matrise göre dönüştürerek çarpıklığı önlüyoruz
         Vector3 finalPosition = pos + (rot * meshPositionOffset) + (transform.TransformDirection(directionOffset));
         Quaternion finalRotation = rot * Quaternion.Euler(meshRotationOffset);
 
-        mesh.SetPositionAndRotation(finalPosition, finalRotation);
-        mesh.localScale = Vector3.one; 
+        mesh.position = finalPosition;
+        mesh.rotation = finalRotation;
     }
 
     void UpdateCarBodyHeight()
     {
-        if (carPartsToRaise == null || originalBodyLocalPositions == null) return;
+        // DÜZELTME: Eğer yükseklik sıfırsa ve parça yoksa hiç çalıştırma, pozisyonları ezme!
+        if (carPartsToRaise == null || originalBodyLocalPositions == null || carBodyHeightOffset == 0f) return;
 
         for (int i = 0; i < carPartsToRaise.Length; i++)
         {

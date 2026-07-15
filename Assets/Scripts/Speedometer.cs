@@ -4,6 +4,7 @@ using TMPro;
 public class Speedometer : MonoBehaviour
 {
     [Header("Bağlantılar")]
+    [Tooltip("Boş bırakabilirsiniz; kod sahnede aktif olan arabayı otomatik bulacaktır.")]
     public Rigidbody carRigidbody; // Arabanın Rigidbody bileşeni
     public TMP_Text speedText;     // UI_SpeedometerText objemiz
     public AudioSource engineAudio; // Arabaya eklediğimiz Audio Source
@@ -17,11 +18,13 @@ public class Speedometer : MonoBehaviour
     public Color warningColor = new Color(1f, 0.1f, 0.1f, 1f); 
 
     [Header("Ses ve Devir Ayarları")]
-    public float minPitch = 0.8f;   // Vitesin en başındaki en düşük ses tonu (Rölanti/Yeni vites)
-    public float maxPitch = 1.8f;   // Vitesin sonundaki en yüksek ses tonu (Bağırma noktası)
+    public float minPitch = 0.8f;   // Vitesin en başındaki en düşük ses tonu
+    public float maxPitch = 1.8f;   // Vitesin sonundaki en yüksek ses tonu
 
     // Senin belirttiğin vites geçiş hız sınırları
     private readonly float[] gearLimits = { 20f, 50f, 80f, 100f, 120f, 130f };
+
+    private float nextSearchTime = 0f; // Performans dostu arama için zamanlayıcı
 
     void Start()
     {
@@ -30,14 +33,21 @@ public class Speedometer : MonoBehaviour
             speedText.color = normalColor;
         }
 
-        if (engineAudio == null && carRigidbody != null)
-        {
-            engineAudio = carRigidbody.GetComponent<AudioSource>();
-        }
+        FindActiveCar();
     }
 
     void Update()
     {
+        // Eğer sahnede araba yoksa veya değiştiyse, performans kaybı yaratmadan her 1 saniyede bir yeni arabayı tara
+        if (carRigidbody == null || !carRigidbody.gameObject.activeInHierarchy)
+        {
+            if (Time.time > nextSearchTime)
+            {
+                FindActiveCar();
+                nextSearchTime = Time.time + 1f; // Saniyede bir kez çalışır
+            }
+        }
+
         if (carRigidbody != null)
         {
             // Arabanın anlık hızını KM/H olarak hesapla
@@ -47,7 +57,7 @@ public class Speedometer : MonoBehaviour
             // 1. Hız Göstergesi Yazısı ve Renk Kontrolü
             if (speedText != null)
             {
-                speedText.text = displaySpeed.ToString() + " KM/H";
+                speedText.text = displaySpeed.ToString("000") + " KM/H"; // Formatı "000" yaparak senin görseldeki gibi 000 KM/H duruşunu koruduk
                 speedText.color = (currentSpeed >= speedLimit) ? warningColor : normalColor;
             }
 
@@ -61,19 +71,45 @@ public class Speedometer : MonoBehaviour
                 engineAudio.pitch = pitchValue;
             }
         }
+        else
+        {
+            // Sahnede aktif araba yoksa göstergeyi sıfırla
+            if (speedText != null)
+            {
+                speedText.text = "000 KM/H";
+                speedText.color = normalColor;
+            }
+        }
     }
 
-    // Arabanın hızına göre şu an hangi viteste olduğunu bulur (0: 1. Vites, 1: 2. Vites...)
+    // Sahnede o an aktif (görünür/kullanılan) olan arabayı otomatik bulur
+    void FindActiveCar()
+    {
+        CarController[] cars = FindObjectsByType<CarController>(FindObjectsSortMode.None);
+        
+        foreach (CarController car in cars)
+        {
+            // Sadece hiyerarşide aktif/açık olan arabayı seç
+            if (car.gameObject.activeInHierarchy)
+            {
+                carRigidbody = car.GetComponent<Rigidbody>();
+                engineAudio = car.GetComponent<AudioSource>();
+                break; 
+            }
+        }
+    }
+
+    // Arabanın hızına göre şu an hangi viteste olduğunu bulur
     int CalculateGear(float speed)
     {
         for (int i = 0; i < gearLimits.Length; i++)
         {
             if (speed < gearLimits[i])
             {
-                return i; // Hız limitin altındaysa bu vitesteyiz
+                return i;
             }
         }
-        return gearLimits.Length; // Limitlerin üstündeysek en son vitesteyiz
+        return gearLimits.Length;
     }
 
     // Bulunan vitesin içindeki hıza göre motor devrini (pitch) hesaplar
@@ -91,16 +127,14 @@ public class Speedometer : MonoBehaviour
             }
             else
             {
-                maxSpeedForThisGear = 200f; // Son vitesin sınırını yüksek bir hız yapalım
+                maxSpeedForThisGear = 200f;
             }
         }
 
-        // Mevcut vitesin içindeki hız yüzdesini bul (0.0 ile 1.0 arasında)
         float gearSpeedRange = maxSpeedForThisGear - minSpeedForThisGear;
         float currentSpeedInGear = speed - minSpeedForThisGear;
         float gearProgress = Mathf.Clamp01(currentSpeedInGear / gearSpeedRange);
 
-        // Bu yüzdeye göre minPitch ve maxPitch arasında yumuşakça geçiş yap
         return Mathf.Lerp(minPitch, maxPitch, gearProgress);
     }
 }

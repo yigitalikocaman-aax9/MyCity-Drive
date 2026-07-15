@@ -5,7 +5,13 @@ using TMPro;
 
 public class MobileGearShifter : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerUpHandler
 {
-    public CarController car; // Arabamızın scripti
+    [Header("Araba Bağlantıları")]
+    [Tooltip("Eğer burayı boş bırakırsan, kod sahnedeki aktif arabayı otomatik bulur.")]
+    public CarController activeCar; // Şu an kontrol edilen aktif araba
+
+    [Tooltip("Oyundaki tüm arabaları buraya sürükleyip liste halinde tutabilirsin (Opsiyonel)")]
+    public CarController[] allCars; // Diğer arabalar için kutucuklar
+
     public RectTransform handle; // Hareket edecek olan vites kolu görseli (UI_TransmissionHandle)
     
     [Header("Yazı Göstergeleri")]
@@ -26,19 +32,81 @@ public class MobileGearShifter : MonoBehaviour, IDragHandler, IPointerDownHandle
 
     void Start()
     {
-        // Başlangıçta vites D (Drive) konumunda başlasın
+        // Başlangıçta vites D (Drive) konumunda başlasın (Yukarıda)
         targetY = movementRange;
         handle.anchoredPosition = new Vector2(0, targetY);
         UpdateVisuals();
+
+        // Eğer Inspector'da aktif bir araba atanmadıysa, sahnedeki aktif olanı otomatik bul
+        if (activeCar == null)
+        {
+            FindActiveCarInScene();
+        }
     }
 
     void Update()
     {
+        // Eğer araba hiyerarşide kapandıysa veya yoksa yenisini otomatik bulmaya çalış
+        if (activeCar == null || !activeCar.gameObject.activeInHierarchy)
+        {
+            FindActiveCarInScene();
+        }
+
         // Sürüklenmiyorken vitesi yerine yumuşakça kaydır
         if (!isDragging)
         {
             float currentY = Mathf.Lerp(handle.anchoredPosition.y, targetY, Time.deltaTime * snapSpeed);
             handle.anchoredPosition = new Vector2(0, currentY);
+        }
+    }
+
+    /// <summary>
+    /// Sahne üzerinde o anda aktif olan CarController'ı otomatik bulur.
+    /// </summary>
+    public void FindActiveCarInScene()
+    {
+        // Önce allCars listesinden hiyerarşide aktif olan bir araba var mı ona bakalım
+        if (allCars != null && allCars.Length > 0)
+        {
+            foreach (var car in allCars)
+            {
+                if (car != null && car.gameObject.activeInHierarchy)
+                {
+                    activeCar = car;
+                    SyncGearToActiveCar();
+                    return;
+                }
+            }
+        }
+
+        // Eğer listede yoksa sahnedeki herhangi bir aktif CarController'ı bulalım
+        CarController foundCar = GameObject.FindAnyObjectByType<CarController>();
+        if (foundCar != null)
+        {
+            activeCar = foundCar;
+            SyncGearToActiveCar();
+        }
+    }
+
+    /// <summary>
+    /// Yeni arabaya geçildiğinde arayüzdeki vites durumunu arabanın fiziksel yönüne eşitler.
+    /// </summary>
+    private void SyncGearToActiveCar()
+    {
+        if (activeCar != null)
+        {
+            // Araba Drive'da ise kolu yukarı (Drive konumuna), Reverse'te ise aşağıya (Reverse konumuna) çekiyoruz.
+            if (activeCar.currentGear == CarController.Gear.Drive)
+            {
+                currentGear = Gear.Drive;
+                targetY = movementRange;
+            }
+            else
+            {
+                currentGear = Gear.Reverse;
+                targetY = -movementRange;
+            }
+            UpdateVisuals();
         }
     }
 
@@ -80,13 +148,22 @@ public class MobileGearShifter : MonoBehaviour, IDragHandler, IPointerDownHandle
         currentGear = newGear;
         UpdateVisuals();
 
-        if (car != null)
+        if (activeCar != null)
         {
-            bool isReverse = (currentGear == Gear.Reverse);
-            
-            // CarController içindeki vites fonksiyonunu tetiklemesini devre dışı bıraktık.
-            // Böylece Unity hata vermeyecek, önce arayüz animasyonunu test edebileceğiz.
-            // car.SetReverse(isReverse); 
+            // Arabanın hızını kontrol ederek güvenli vites geçişi yapıyoruz
+            float speed = activeCar.GetComponent<Rigidbody>().linearVelocity.magnitude * 3.6f;
+            if (speed < 5f) 
+            {
+                // Kol D'ye çekildiyse arabaya CarController.Gear.Drive, R'ye çekildiyse CarController.Gear.Reverse gönderiyoruz.
+                activeCar.currentGear = (newGear == Gear.Drive) ? CarController.Gear.Drive : CarController.Gear.Reverse;
+                Debug.Log("Aktif Arabanın Vitesi Eşitlendi: " + activeCar.currentGear);
+            }
+            else
+            {
+                // Eğer araba hızlı gidiyorsa vitesi değiştirme, eski konumuna geri at
+                Debug.LogWarning("Araba durmadan vites değiştiremezsin!");
+                SyncGearToActiveCar();
+            }
         }
     }
 

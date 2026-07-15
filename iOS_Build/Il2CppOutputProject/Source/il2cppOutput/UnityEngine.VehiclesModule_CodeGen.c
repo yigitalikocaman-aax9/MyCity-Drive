@@ -1,0 +1,87 @@
+﻿#include "pch-c.h"
+
+
+#include "codegen/il2cpp-codegen-metadata.h"
+
+
+
+
+
+extern void WheelCollider_get_forwardFriction_mB0B8AB7668623F8646FFB1E6CD81E540B6EE51B0 (void);
+extern void WheelCollider_set_forwardFriction_m1932872F22DD4D5584C0D14FBDCD56848F111510 (void);
+extern void WheelCollider_get_sidewaysFriction_m7924ABBBB268B7F1FD8630733B6375CAFC2621E8 (void);
+extern void WheelCollider_set_sidewaysFriction_mB2062696F29B4275C7F5B2874FD333ECD2325DA8 (void);
+extern void WheelCollider_set_motorTorque_m4958AAF7D867CF7570420F9BAFAF04DC904F02A8 (void);
+extern void WheelCollider_set_brakeTorque_mB9B216C57C275470907C7DB35185E2F192DC8DAB (void);
+extern void WheelCollider_set_steerAngle_m7BF83B27D8956355F873537939BE9F35CF3113C3 (void);
+extern void WheelCollider_GetWorldPose_m8C41FA2AE9ED543AB94A6E3226523A2FE83FA890 (void);
+extern void WheelCollider__ctor_mD44B2C97960274797DABD055BBEB18E664DAD906 (void);
+extern void WheelCollider_get_forwardFriction_Injected_mB00ACC3CAA3B6994E07E6FD32AF88786835E815A (void);
+extern void WheelCollider_set_forwardFriction_Injected_mFB7251606FB9AEBA6B2691407DA0E8CEC17D83B0 (void);
+extern void WheelCollider_get_sidewaysFriction_Injected_m115463FA7EB8BB2ED03141EC55FDEE029BBB2C73 (void);
+extern void WheelCollider_set_sidewaysFriction_Injected_m42CC1E33775FF0A3EA7D33C44DC1F4F6E4C24DA1 (void);
+extern void WheelCollider_set_motorTorque_Injected_mDC3AFD111B0711D6D7450F3FDCC18386352888C2 (void);
+extern void WheelCollider_set_brakeTorque_Injected_mF745FF43BCCE204923ABCF9FD3F0725BFB6927E2 (void);
+extern void WheelCollider_set_steerAngle_Injected_m1D19C28872BFFC9C692FA4F50454A3400D5ACC20 (void);
+extern void WheelCollider_GetWorldPose_Injected_m5CADCBBA43204BA3C8EF66B85A568D7A685B28AE (void);
+static Il2CppMethodPointer s_methodPointers[17] = 
+{
+	WheelCollider_get_forwardFriction_mB0B8AB7668623F8646FFB1E6CD81E540B6EE51B0,
+	WheelCollider_set_forwardFriction_m1932872F22DD4D5584C0D14FBDCD56848F111510,
+	WheelCollider_get_sidewaysFriction_m7924ABBBB268B7F1FD8630733B6375CAFC2621E8,
+	WheelCollider_set_sidewaysFriction_mB2062696F29B4275C7F5B2874FD333ECD2325DA8,
+	WheelCollider_set_motorTorque_m4958AAF7D867CF7570420F9BAFAF04DC904F02A8,
+	WheelCollider_set_brakeTorque_mB9B216C57C275470907C7DB35185E2F192DC8DAB,
+	WheelCollider_set_steerAngle_m7BF83B27D8956355F873537939BE9F35CF3113C3,
+	WheelCollider_GetWorldPose_m8C41FA2AE9ED543AB94A6E3226523A2FE83FA890,
+	WheelCollider__ctor_mD44B2C97960274797DABD055BBEB18E664DAD906,
+	WheelCollider_get_forwardFriction_Injected_mB00ACC3CAA3B6994E07E6FD32AF88786835E815A,
+	WheelCollider_set_forwardFriction_Injected_mFB7251606FB9AEBA6B2691407DA0E8CEC17D83B0,
+	WheelCollider_get_sidewaysFriction_Injected_m115463FA7EB8BB2ED03141EC55FDEE029BBB2C73,
+	WheelCollider_set_sidewaysFriction_Injected_m42CC1E33775FF0A3EA7D33C44DC1F4F6E4C24DA1,
+	WheelCollider_set_motorTorque_Injected_mDC3AFD111B0711D6D7450F3FDCC18386352888C2,
+	WheelCollider_set_brakeTorque_Injected_mF745FF43BCCE204923ABCF9FD3F0725BFB6927E2,
+	WheelCollider_set_steerAngle_Injected_m1D19C28872BFFC9C692FA4F50454A3400D5ACC20,
+	WheelCollider_GetWorldPose_Injected_m5CADCBBA43204BA3C8EF66B85A568D7A685B28AE,
+};
+static const int32_t s_InvokerIndices[17] = 
+{
+	13925,
+	10726,
+	13925,
+	10726,
+	10626,
+	10626,
+	10626,
+	4208,
+	13923,
+	20118,
+	20118,
+	20118,
+	20118,
+	20124,
+	20124,
+	20124,
+	18047,
+};
+IL2CPP_EXTERN_C const Il2CppCodeGenModule g_UnityEngine_VehiclesModule_CodeGenModule;
+const Il2CppCodeGenModule g_UnityEngine_VehiclesModule_CodeGenModule = 
+{
+	"UnityEngine.VehiclesModule.dll",
+	17,
+	s_methodPointers,
+	0,
+	NULL,
+	s_InvokerIndices,
+	0,
+	NULL,
+	0,
+	NULL,
+	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
