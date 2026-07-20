@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Myfriend-sGolf.slnx"
+    "dotnet.defaultSolution": "MyCity-Drive.slnx"
 }
